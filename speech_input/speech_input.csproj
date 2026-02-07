@@ -33,6 +33,28 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="InputSimulatorPlus">
+      <Version>1.0.7</Version>
+    </PackageReference>
+    <PackageReference Include="NAudio">
+      <Version>2.2.1</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.4</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Win32.Registry">
+      <Version>4.7.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Security.AccessControl">
+      <Version>4.7.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Security.Principal.Windows">
+      <Version>4.7.0</Version>
+    </PackageReference>
+  </ItemGroup>
+
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -46,44 +68,7 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="InputSimulatorPlus">
-      <Version>1.0.7</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Win32.Registry">
-      <Version>4.7.0</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio">
-      <Version>2.2.1</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio.Asio">
-      <Version>2.2.1</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio.Core">
-      <Version>2.2.1</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio.Midi">
-      <Version>2.2.1</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio.Wasapi">
-      <Version>2.2.1</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio.WinForms">
-      <Version>2.2.1</Version>
-    </PackageReference>
-    <PackageReference Include="NAudio.WinMM">
-      <Version>2.2.1</Version>
-    </PackageReference>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>13.0.4</Version>
-    </PackageReference>
-    <PackageReference Include="System.Security.AccessControl">
-      <Version>4.7.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.Security.Principal.Windows">
-      <Version>4.7.0</Version>
-    </PackageReference>
-  </ItemGroup>
+
   <ItemGroup>
     <Compile Include="AudioRecorder.cs" />
     <Compile Include="Form1.cs">
@@ -108,7 +93,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
