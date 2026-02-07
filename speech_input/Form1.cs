@@ -75,6 +75,9 @@ namespace speech_input
             録音開始ToolStripMenuItem.Enabled = false;
             録音停止ToolStripMenuItem.Enabled = true;
 
+            // Test if typing works
+            _inputHandler.TypeText("[Speech-Input Started]");
+
             await _client.StartAsync();
             _recorder.Start();
         }

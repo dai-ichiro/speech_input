@@ -43,16 +43,23 @@ namespace speech_input
                 await ReceiveOneMessageAsync();
 
                 // 2. Update session
+                // vLLM / OpenAI Realtime API format
                 var updateMsg = JsonConvert.SerializeObject(new
                 {
                     type = "session.update",
-                    model = _model
+                    session = new
+                    {
+                        model = _model,
+                        modalities = new[] { "text" },
+                        input_audio_transcription = new { model = "whisper-1" },
+                        turn_detection = new { type = "server_vad" }
+                    }
                 });
                 await SendMessageAsync(updateMsg);
 
-                // 3. Initial commit
-                var commitMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.commit" });
-                await SendMessageAsync(commitMsg);
+                // 3. (Optional) Initial commit if not using VAD, but with VAD it's generally not needed at start
+                // var commitMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.commit" });
+                // await SendMessageAsync(commitMsg);
 
                 StatusChanged?.Invoke("録音中（接続済み）");
 
@@ -115,6 +122,12 @@ namespace speech_input
             try
             {
                 if (_ws?.State != WebSocketState.Open) return;
+
+                if (!message.Contains("input_audio_buffer.append")) // Don't log audio data to keep log file small
+                {
+                    try { File.AppendAllText("vllm_ws.log", $"[{DateTime.Now:HH:mm:ss.fff}] Sending: {message}{Environment.NewLine}"); } catch { }
+                }
+
                 var bytes = Encoding.UTF8.GetBytes(message);
                 await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, _cts?.Token ?? CancellationToken.None);
             }
@@ -155,12 +168,27 @@ namespace speech_input
                     var message = await ReceiveOneMessageAsync();
                     if (message == null) break;
 
+                    try
+                    {
+                        File.AppendAllText("vllm_ws.log", $"[{DateTime.Now:HH:mm:ss.fff}] Received: {message}{Environment.NewLine}");
+                    }
+                    catch { }
+
                     var data = JObject.Parse(message);
                     var type = data["type"]?.ToString();
 
-                    if (type == "transcription.delta" || type == "response.audio_transcription.delta")
+                    // Handle various types of transcription/text deltas
+                    if (type == "transcription.delta" ||
+                        type == "response.audio_transcription.delta" ||
+                        type == "response.text.delta" ||
+                        type == "conversation.item.input_audio_transcription.delta")
                     {
                         var delta = data["delta"]?.ToString();
+                        if (string.IsNullOrEmpty(delta))
+                        {
+                            delta = data["text"]?.ToString(); // Some implementations might use 'text'
+                        }
+
                         if (!string.IsNullOrEmpty(delta))
                         {
                             DeltaReceived?.Invoke(delta);
