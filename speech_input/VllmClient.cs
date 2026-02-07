@@ -60,16 +60,8 @@ namespace speech_input
                 });
                 await SendMessageAsync(updateMsg);
 
-                // 3. Commit and Create response to ensure the server starts processing
-                var commitMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.commit" });
-                await SendMessageAsync(commitMsg);
-
-                var responseCreateMsg = JsonConvert.SerializeObject(new
-                {
-                    type = "response.create",
-                    response = new { modalities = new[] { "text" } }
-                });
-                await SendMessageAsync(responseCreateMsg);
+                // 3. No extra messages here as they might cause "Unknown event type" errors.
+                // The server should start processing audio via VAD automatically.
 
                 StatusChanged?.Invoke("録音中（接続済み）");
 
@@ -187,21 +179,26 @@ namespace speech_input
                     var data = JObject.Parse(message);
                     var type = data["type"]?.ToString();
 
-                    // Handle various types of transcription/text deltas
-                    if (type == "transcription.delta" ||
-                        type == "response.audio_transcription.delta" ||
-                        type == "response.text.delta" ||
-                        type == "conversation.item.input_audio_transcription.delta")
+                    // Handle various types of transcription/text events
+                    // We check for many possible types and fields to be as resilient as possible
+                    if (type != null && (type.Contains("delta") || type.Contains("transcription") || type.Contains("text") || type.Contains("response")))
                     {
-                        var delta = data["delta"]?.ToString();
-                        if (string.IsNullOrEmpty(delta))
+                        // Try to find the text in common fields
+                        string text = data["delta"]?.ToString()
+                                   ?? data["text"]?.ToString()
+                                   ?? data["content"]?.ToString()
+                                   ?? data["transcription"]?.ToString();
+
+                        // If it's a nested structure like response.audio_transcription.delta
+                        if (string.IsNullOrEmpty(text) && data["item"] != null)
                         {
-                            delta = data["text"]?.ToString(); // Some implementations might use 'text'
+                            text = data["item"]["content"]?[0]?["text"]?.ToString()
+                                ?? data["item"]["text"]?.ToString();
                         }
 
-                        if (!string.IsNullOrEmpty(delta))
+                        if (!string.IsNullOrEmpty(text))
                         {
-                            DeltaReceived?.Invoke(delta);
+                            DeltaReceived?.Invoke(text);
                         }
                     }
                     else if (type == "error")
