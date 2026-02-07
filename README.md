@@ -13,8 +13,7 @@ vLLMのRealtime APIを使用して、リアルタイムで音声をテキスト�
 
 - **OS**: Windows
 - **ランタイム**: .NET Framework 4.8
-- **サーバー**: vLLM（OpenAI互換のRealtime APIをサポートしているもの）
-  - デフォルトでは `ws://localhost:8000/v1/realtime` に接続を試みます。
+- **サーバー**: vLLM
 
 ## インストールとビルド
 
