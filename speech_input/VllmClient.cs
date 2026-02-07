@@ -43,12 +43,15 @@ namespace speech_input
                 await ReceiveOneMessageAsync();
 
                 // 2. Update session
-                // vLLM / OpenAI Realtime API format
+                // vLLM might expect these at top level or nested. Trying top level for better compatibility.
                 var updateMsg = JsonConvert.SerializeObject(new
                 {
                     type = "session.update",
                     model = _model,
-                    session = new
+                    modalities = new[] { "text" },
+                    input_audio_transcription = new { model = "whisper-1" },
+                    turn_detection = new { type = "server_vad" },
+                    session = new // Also include nested just in case
                     {
                         modalities = new[] { "text" },
                         input_audio_transcription = new { model = "whisper-1" },
@@ -57,9 +60,16 @@ namespace speech_input
                 });
                 await SendMessageAsync(updateMsg);
 
-                // 3. (Optional) Initial commit if not using VAD, but with VAD it's generally not needed at start
-                // var commitMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.commit" });
-                // await SendMessageAsync(commitMsg);
+                // 3. Commit and Create response to ensure the server starts processing
+                var commitMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.commit" });
+                await SendMessageAsync(commitMsg);
+
+                var responseCreateMsg = JsonConvert.SerializeObject(new
+                {
+                    type = "response.create",
+                    response = new { modalities = new[] { "text" } }
+                });
+                await SendMessageAsync(responseCreateMsg);
 
                 StatusChanged?.Invoke("録音中（接続済み）");
 
