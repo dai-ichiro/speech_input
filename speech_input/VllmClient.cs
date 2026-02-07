@@ -46,28 +46,16 @@ namespace speech_input
                 try { File.AppendAllText("vllm_ws.log", $"[{DateTime.Now:HH:mm:ss.fff}] Server Hello: {hello}{Environment.NewLine}"); } catch { }
 
                 // 2. Update session
-                // vLLM might expect these at top level or nested. Trying top level for better compatibility.
                 var updateMsg = JsonConvert.SerializeObject(new
                 {
                     type = "session.update",
-                    model = _model,
-                    modalities = new[] { "text" },
-                    instructions = "You are a speech-to-text assistant. Please transcribe the user's speech accurately into text.",
-                    input_audio_transcription = new { model = "whisper-1" },
-                    turn_detection = new { type = "server_vad" },
-                    session = new // Also include nested just in case
-                    {
-                        modalities = new[] { "text" },
-                        instructions = "You are a speech-to-text assistant. Please transcribe the user's speech accurately into text.",
-                        input_audio_transcription = new { model = "whisper-1" },
-                        turn_detection = new { type = "server_vad" }
-                    }
+                    model = _model
                 });
                 await SendMessageAsync(updateMsg);
 
-                // 3. Clear buffer to start fresh
-                var clearMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.clear" });
-                await SendMessageAsync(clearMsg);
+                // 3. Initial commit
+                var commitMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.commit" });
+                await SendMessageAsync(commitMsg);
 
                 StatusChanged?.Invoke("録音中（接続済み）");
 
