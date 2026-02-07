@@ -35,12 +35,27 @@ namespace speech_input
             _client.DeltaReceived += OnDeltaReceived;
             _client.ErrorOccurred += OnErrorOccurred;
             _client.StatusChanged += OnStatusChanged;
+            _client.MessageReceived += OnMessageReceived;
         }
 
         private async void OnAudioDataAvailable(byte[] data)
         {
             string base64Audio = Convert.ToBase64String(data);
             await _client.SendAudioAsync(base64Audio);
+        }
+
+        private bool _firstMessageReceived = false;
+
+        private void OnMessageReceived(string message)
+        {
+            if (!_firstMessageReceived)
+            {
+                _firstMessageReceived = true;
+                this.BeginInvoke(new Action(() =>
+                {
+                    notifyIcon1.ShowBalloonTip(2000, "Connected", "vLLMからの応答を受信しました。", ToolTipIcon.Info);
+                }));
+            }
         }
 
         private void OnDeltaReceived(string delta)
@@ -72,6 +87,7 @@ namespace speech_input
 
         private async void 録音開始ToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            _firstMessageReceived = false;
             録音開始ToolStripMenuItem.Enabled = false;
             録音停止ToolStripMenuItem.Enabled = true;
 
@@ -106,6 +122,19 @@ namespace speech_input
             }
             base.SetVisibleCore(value);
         }
+        private void ログを表示ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "vllm_ws.log");
+            if (System.IO.File.Exists(logPath))
+            {
+                System.Diagnostics.Process.Start(logPath);
+            }
+            else
+            {
+                MessageBox.Show("ログファイルが見つかりません。録音を開始すると作成されます。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
         private void 終了ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // タスクトレイのアイコンを明示的に非表示にする（これをしないと終了後もアイコンが残ることがあります）
