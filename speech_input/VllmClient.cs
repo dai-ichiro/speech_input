@@ -16,6 +16,7 @@ namespace speech_input
         private readonly string _model;
         private CancellationTokenSource _cts;
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
+        private int _audioPacketCount = 0;
 
         public event Action<string> DeltaReceived;
         public event Action<string> ErrorOccurred;
@@ -40,7 +41,9 @@ namespace speech_input
                 await _ws.ConnectAsync(_uri, _cts.Token);
 
                 // 1. Wait for session.created
-                await ReceiveOneMessageAsync();
+                StatusChanged?.Invoke("セッション作成待ち...");
+                var hello = await ReceiveOneMessageAsync();
+                try { File.AppendAllText("vllm_ws.log", $"[{DateTime.Now:HH:mm:ss.fff}] Server Hello: {hello}{Environment.NewLine}"); } catch { }
 
                 // 2. Update session
                 // vLLM might expect these at top level or nested. Trying top level for better compatibility.
@@ -49,19 +52,22 @@ namespace speech_input
                     type = "session.update",
                     model = _model,
                     modalities = new[] { "text" },
+                    instructions = "You are a speech-to-text assistant. Please transcribe the user's speech accurately into text.",
                     input_audio_transcription = new { model = "whisper-1" },
                     turn_detection = new { type = "server_vad" },
                     session = new // Also include nested just in case
                     {
                         modalities = new[] { "text" },
+                        instructions = "You are a speech-to-text assistant. Please transcribe the user's speech accurately into text.",
                         input_audio_transcription = new { model = "whisper-1" },
                         turn_detection = new { type = "server_vad" }
                     }
                 });
                 await SendMessageAsync(updateMsg);
 
-                // 3. No extra messages here as they might cause "Unknown event type" errors.
-                // The server should start processing audio via VAD automatically.
+                // 3. Clear buffer to start fresh
+                var clearMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.clear" });
+                await SendMessageAsync(clearMsg);
 
                 StatusChanged?.Invoke("録音中（接続済み）");
 
@@ -114,6 +120,12 @@ namespace speech_input
                 audio = base64Audio
             });
             await SendMessageAsync(msg);
+
+            _audioPacketCount++;
+            if (_audioPacketCount % 20 == 0)
+            {
+                try { File.AppendAllText("vllm_ws.log", $"[{DateTime.Now:HH:mm:ss.fff}] Sent 20 audio packets (Total: {_audioPacketCount}){Environment.NewLine}"); } catch { }
+            }
         }
 
         private async Task SendMessageAsync(string message)

@@ -13,7 +13,7 @@ namespace speech_input
             if (_waveIn != null) return;
 
             _waveIn = new WaveInEvent();
-            _waveIn.WaveFormat = new WaveFormat(16000, 16, 1); // 16kHz, 16-bit, Mono
+            _waveIn.WaveFormat = new WaveFormat(24000, 16, 1); // 24kHz, 16-bit, Mono (OpenAI Realtime Standard)
             _waveIn.DataAvailable += (s, e) =>
             {
                 if (e.BytesRecorded > 0)
