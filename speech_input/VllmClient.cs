@@ -49,22 +49,17 @@ namespace speech_input
                 try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Server Hello: {hello}{Environment.NewLine}"); } catch { }
                 MessageReceived?.Invoke(hello);
 
-                // 2. Update session
-                // We send 'model' at both top-level (for vLLM) and inside 'session' (for standard compatibility)
-                // Based on logs, top-level 'model' + nested 'session' with other settings works best to avoid 'processing_error'.
+                // 2. Update session (Match Python script)
                 var updateMsg = JsonConvert.SerializeObject(new
                 {
                     type = "session.update",
-                    model = _model,
-                    session = new
-                    {
-                        modalities = new[] { "text" },
-                        instructions = "あなたは文字起こしアシスタントです。ユーザーの音声を正確にテキストに変換してください。",
-                        turn_detection = new { type = "server_vad" },
-                        input_audio_transcription = new { model = "whisper-1" }
-                    }
+                    model = _model
                 });
                 await SendMessageAsync(updateMsg);
+
+                // 3. Initial commit (Match Python script)
+                var commitMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.commit" });
+                await SendMessageAsync(commitMsg);
 
                 StatusChanged?.Invoke("録音中（接続済み）");
 
@@ -194,48 +189,14 @@ namespace speech_input
                     var data = JObject.Parse(message);
                     var type = data["type"]?.ToString();
 
-                    // Handle various types of transcription/text events
-                    // We check for many possible types and fields to be as resilient as possible
-                    if (type != null && (type.Contains("delta") || type.Contains("transcription") || type.Contains("text") || type.Contains("response")))
+                    // Handle transcription deltas (Match Python script)
+                    if (type == "transcription.delta" || type == "response.audio_transcription.delta")
                     {
-                        string text = null;
-
-                        // 1. Try common top-level fields
-                        text = data["delta"]?.ToString()
-                            ?? data["text"]?.ToString()
-                            ?? data["content"]?.ToString()
-                            ?? data["transcription"]?.ToString();
-
-                        // 2. Try nested delta (e.g. conversation.item.input_audio_transcription.delta)
-                        if (string.IsNullOrEmpty(text) && data["delta"] is JObject)
-                        {
-                            text = data["delta"]["text"]?.ToString();
-                        }
-
-                        // 3. Try nested content (e.g. response.text.delta or conversation.item)
-                        if (string.IsNullOrEmpty(text) && data["item"] is JObject item)
-                        {
-                            text = item["content"]?[0]?["text"]?.ToString()
-                                ?? item["text"]?.ToString()
-                                ?? item["delta"]?.ToString();
-                        }
-
-                        // 4. Try response object
-                        if (string.IsNullOrEmpty(text) && data["response"] is JObject response)
-                        {
-                            text = response["text"]?.ToString();
-                        }
-
+                        string text = data["delta"]?.ToString();
                         if (!string.IsNullOrEmpty(text))
                         {
                             try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Extracted text: {text}{Environment.NewLine}"); } catch { }
                             DeltaReceived?.Invoke(text);
-                        }
-                        else if (type != "input_audio_buffer.speech_started" && type != "input_audio_buffer.speech_stopped"
-                                 && type != "session.created" && type != "session.updated" && type != "rate_limits.updated")
-                        {
-                            // Log unexpected empty results to help debugging
-                            try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] No text found in {type}. Full msg: {message}{Environment.NewLine}"); } catch { }
                         }
                     }
                     else if (type == "error")
