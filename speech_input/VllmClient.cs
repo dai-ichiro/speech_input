@@ -16,14 +16,11 @@ namespace speech_input
         private readonly string _model;
         private CancellationTokenSource _cts;
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
-        private int _audioPacketCount = 0;
 
         public event Action<string> DeltaReceived;
         public event Action<string> ErrorOccurred;
         public event Action<string> StatusChanged;
         public event Action<string> MessageReceived;
-
-        private string LogPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "vllm_ws.log");
 
         public VllmClient(string url, string model)
         {
@@ -46,7 +43,6 @@ namespace speech_input
                 // 1. Wait for session.created
                 StatusChanged?.Invoke("セッション作成待ち...");
                 var hello = await ReceiveOneMessageAsync();
-                try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Server Hello: {hello}{Environment.NewLine}"); } catch { }
                 MessageReceived?.Invoke(hello);
 
                 // 2. Update session (Match Python script)
@@ -112,17 +108,6 @@ namespace speech_input
                 audio = base64Audio
             });
             await SendMessageAsync(msg);
-
-            _audioPacketCount++;
-            if (_audioPacketCount % 20 == 0)
-            {
-                try
-                {
-                    int bytes = (base64Audio.Length * 3) / 4;
-                    File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Sent 20 packets (Total: {_audioPacketCount}), Last packet approx {bytes} bytes.{Environment.NewLine}");
-                }
-                catch { }
-            }
         }
 
         private async Task SendMessageAsync(string message)
@@ -133,11 +118,6 @@ namespace speech_input
             try
             {
                 if (_ws?.State != WebSocketState.Open) return;
-
-                if (!message.Contains("input_audio_buffer.append")) // Don't log audio data to keep log file small
-                {
-                    try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Sending: {message}{Environment.NewLine}"); } catch { }
-                }
 
                 var bytes = Encoding.UTF8.GetBytes(message);
                 await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, _cts?.Token ?? CancellationToken.None);
@@ -179,11 +159,6 @@ namespace speech_input
                     var message = await ReceiveOneMessageAsync();
                     if (message == null) break;
 
-                    try
-                    {
-                        File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Received: {message}{Environment.NewLine}");
-                    }
-                    catch { }
                     MessageReceived?.Invoke(message);
 
                     var data = JObject.Parse(message);
@@ -195,7 +170,6 @@ namespace speech_input
                         string text = data["delta"]?.ToString();
                         if (!string.IsNullOrEmpty(text))
                         {
-                            try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Extracted text: {text}{Environment.NewLine}"); } catch { }
                             DeltaReceived?.Invoke(text);
                         }
                     }

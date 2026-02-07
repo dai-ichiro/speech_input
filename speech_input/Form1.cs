@@ -28,6 +28,7 @@ namespace speech_input
         private AudioRecorder _recorder;
         private InputHandler _inputHandler;
         private RecordingIndicator _indicator;
+        private bool _isRecording = false;
 
         private const string WS_URL = "ws://localhost:8000/v1/realtime";
         private const string MODEL_NAME = "mistralai/Voxtral-Mini-4B-Realtime-2602";
@@ -68,9 +69,9 @@ namespace speech_input
 
         private void ToggleRecording()
         {
-            if (録音開始ToolStripMenuItem.Enabled)
+            if (!_isRecording)
             {
-                録音開始ToolStripMenuItem_Click(this, EventArgs.Empty);
+                StartRecording();
             }
             else
             {
@@ -122,11 +123,11 @@ namespace speech_input
             }));
         }
 
-        private async void 録音開始ToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void StartRecording()
         {
+            if (_isRecording) return;
+            _isRecording = true;
             _firstMessageReceived = false;
-            録音開始ToolStripMenuItem.Enabled = false;
-            録音停止ToolStripMenuItem.Enabled = true;
 
             _indicator.Show();
 
@@ -134,15 +135,10 @@ namespace speech_input
             _recorder.Start();
         }
 
-        private void 録音停止ToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            StopRecording();
-        }
-
         private async void StopRecording()
         {
-            録音開始ToolStripMenuItem.Enabled = true;
-            録音停止ToolStripMenuItem.Enabled = false;
+            if (!_isRecording) return;
+            _isRecording = false;
 
             _indicator.Hide();
 
@@ -159,18 +155,6 @@ namespace speech_input
                 CreateHandle();
             }
             base.SetVisibleCore(value);
-        }
-        private void ログを表示ToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "vllm_ws.log");
-            if (System.IO.File.Exists(logPath))
-            {
-                System.Diagnostics.Process.Start(logPath);
-            }
-            else
-            {
-                MessageBox.Show("ログファイルが見つかりません。録音を開始すると作成されます。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)

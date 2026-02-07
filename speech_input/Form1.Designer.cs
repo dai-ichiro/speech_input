@@ -32,10 +32,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.録音開始ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.録音停止ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.ログを表示ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.終了ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -51,41 +47,10 @@
             // 
             this.contextMenuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.録音開始ToolStripMenuItem,
-            this.録音停止ToolStripMenuItem,
-            this.ログを表示ToolStripMenuItem,
-            this.toolStripSeparator1,
             this.終了ToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(154, 138);
-            //
-            // 録音開始ToolStripMenuItem
-            //
-            this.録音開始ToolStripMenuItem.Name = "録音開始ToolStripMenuItem";
-            this.録音開始ToolStripMenuItem.Size = new System.Drawing.Size(153, 32);
-            this.録音開始ToolStripMenuItem.Text = "録音開始";
-            this.録音開始ToolStripMenuItem.Click += new System.EventHandler(this.録音開始ToolStripMenuItem_Click);
-            //
-            // 録音停止ToolStripMenuItem
-            //
-            this.録音停止ToolStripMenuItem.Enabled = false;
-            this.録音停止ToolStripMenuItem.Name = "録音停止ToolStripMenuItem";
-            this.録音停止ToolStripMenuItem.Size = new System.Drawing.Size(153, 32);
-            this.録音停止ToolStripMenuItem.Text = "録音停止";
-            this.録音停止ToolStripMenuItem.Click += new System.EventHandler(this.録音停止ToolStripMenuItem_Click);
-            //
-            // toolStripSeparator1
-            //
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(150, 6);
             // 
-            // ログを表示ToolStripMenuItem
-            //
-            this.ログを表示ToolStripMenuItem.Name = "ログを表示ToolStripMenuItem";
-            this.ログを表示ToolStripMenuItem.Size = new System.Drawing.Size(153, 32);
-            this.ログを表示ToolStripMenuItem.Text = "ログを表示";
-            this.ログを表示ToolStripMenuItem.Click += new System.EventHandler(this.ログを表示ToolStripMenuItem_Click);
-            //
             // 終了ToolStripMenuItem
             // 
             this.終了ToolStripMenuItem.Name = "終了ToolStripMenuItem";
@@ -109,10 +74,6 @@
 
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem 録音開始ToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem 録音停止ToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem ログを表示ToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem 終了ToolStripMenuItem;
     }
 }
