@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.終了ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -38,6 +39,7 @@
             // notifyIcon1
             // 
             this.notifyIcon1.ContextMenuStrip = this.contextMenuStrip1;
+            this.notifyIcon1.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon1.Icon")));
             this.notifyIcon1.Text = "Speech-Input";
             this.notifyIcon1.Visible = true;
             // 
@@ -47,12 +49,12 @@
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.終了ToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(241, 69);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(121, 36);
             // 
             // 終了ToolStripMenuItem
             // 
             this.終了ToolStripMenuItem.Name = "終了ToolStripMenuItem";
-            this.終了ToolStripMenuItem.Size = new System.Drawing.Size(240, 32);
+            this.終了ToolStripMenuItem.Size = new System.Drawing.Size(120, 32);
             this.終了ToolStripMenuItem.Text = "終了";
             this.終了ToolStripMenuItem.Click += new System.EventHandler(this.終了ToolStripMenuItem_Click);
             // 
