@@ -8,11 +8,22 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace speech_input
 {
     public partial class Form1 : Form
     {
+        [DllImport("user32.dll")]
+        private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);
+
+        [DllImport("user32.dll")]
+        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
+        private const int HOTKEY_ID = 1;
+        private const int WM_HOTKEY = 0x0312;
+        private const int VK_F13 = 0x7C;
+
         private VllmClient _client;
         private AudioRecorder _recorder;
         private InputHandler _inputHandler;
@@ -37,6 +48,32 @@ namespace speech_input
             _client.ErrorOccurred += OnErrorOccurred;
             _client.StatusChanged += OnStatusChanged;
             _client.MessageReceived += OnMessageReceived;
+
+            // ハンドルが作成された後にホットキーを登録する
+            this.HandleCreated += (s, e) => {
+                RegisterHotKey(this.Handle, HOTKEY_ID, 0, VK_F13);
+            };
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID)
+            {
+                ToggleRecording();
+            }
+            base.WndProc(ref m);
+        }
+
+        private void ToggleRecording()
+        {
+            if (録音開始ToolStripMenuItem.Enabled)
+            {
+                録音開始ToolStripMenuItem_Click(this, EventArgs.Empty);
+            }
+            else
+            {
+                StopRecording();
+            }
         }
 
         private async void OnAudioDataAvailable(byte[] data)
@@ -134,6 +171,12 @@ namespace speech_input
             {
                 MessageBox.Show("ログファイルが見つかりません。録音を開始すると作成されます。", "情報", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            UnregisterHotKey(this.Handle, HOTKEY_ID);
+            base.OnFormClosing(e);
         }
 
         private void 終了ToolStripMenuItem_Click(object sender, EventArgs e)
