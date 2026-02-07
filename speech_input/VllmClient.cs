@@ -49,7 +49,7 @@ namespace speech_input
                 try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Server Hello: {hello}{Environment.NewLine}"); } catch { }
                 MessageReceived?.Invoke(hello);
 
-                // 2. Update session
+                // 2. Update session (Match Python script)
                 var updateMsg = JsonConvert.SerializeObject(new
                 {
                     type = "session.update",
@@ -57,7 +57,7 @@ namespace speech_input
                 });
                 await SendMessageAsync(updateMsg);
 
-                // 3. Initial commit
+                // 3. Initial commit (Match Python script)
                 var commitMsg = JsonConvert.SerializeObject(new { type = "input_audio_buffer.commit" });
                 await SendMessageAsync(commitMsg);
 
@@ -116,7 +116,12 @@ namespace speech_input
             _audioPacketCount++;
             if (_audioPacketCount % 20 == 0)
             {
-                try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Sent 20 audio packets (Total: {_audioPacketCount}){Environment.NewLine}"); } catch { }
+                try
+                {
+                    int bytes = (base64Audio.Length * 3) / 4;
+                    File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Sent 20 packets (Total: {_audioPacketCount}), Last packet approx {bytes} bytes.{Environment.NewLine}");
+                }
+                catch { }
             }
         }
 
@@ -184,31 +189,14 @@ namespace speech_input
                     var data = JObject.Parse(message);
                     var type = data["type"]?.ToString();
 
-                    // Handle various types of transcription/text events
-                    // We check for many possible types and fields to be as resilient as possible
-                    if (type != null && (type.Contains("delta") || type.Contains("transcription") || type.Contains("text") || type.Contains("response")))
+                    // Handle transcription deltas (Match Python script)
+                    if (type == "transcription.delta" || type == "response.audio_transcription.delta")
                     {
-                        // Try to find the text in common fields
-                        string text = data["delta"]?.ToString()
-                                   ?? data["text"]?.ToString()
-                                   ?? data["content"]?.ToString()
-                                   ?? data["transcription"]?.ToString();
-
-                        // If it's a nested structure like response.audio_transcription.delta
-                        if (string.IsNullOrEmpty(text) && data["item"] != null)
-                        {
-                            text = data["item"]["content"]?[0]?["text"]?.ToString()
-                                ?? data["item"]["text"]?.ToString();
-                        }
-
+                        string text = data["delta"]?.ToString();
                         if (!string.IsNullOrEmpty(text))
                         {
                             try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Extracted text: {text}{Environment.NewLine}"); } catch { }
                             DeltaReceived?.Invoke(text);
-                        }
-                        else
-                        {
-                            try { File.AppendAllText(LogPath, $"[{DateTime.Now:HH:mm:ss.fff}] Pattern matched but no text found in: {type}{Environment.NewLine}"); } catch { }
                         }
                     }
                     else if (type == "error")
