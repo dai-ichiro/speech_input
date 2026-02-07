@@ -27,6 +27,7 @@ namespace speech_input
         private VllmClient _client;
         private AudioRecorder _recorder;
         private InputHandler _inputHandler;
+        private RecordingIndicator _indicator;
 
         private const string WS_URL = "ws://localhost:8000/v1/realtime";
         private const string MODEL_NAME = "mistralai/Voxtral-Mini-4B-Realtime-2602";
@@ -42,6 +43,7 @@ namespace speech_input
             _inputHandler = new InputHandler();
             _recorder = new AudioRecorder();
             _client = new VllmClient(WS_URL, MODEL_NAME);
+            _indicator = new RecordingIndicator();
 
             _recorder.DataAvailable += OnAudioDataAvailable;
             _client.DeltaReceived += OnDeltaReceived;
@@ -89,10 +91,7 @@ namespace speech_input
             if (!_firstMessageReceived)
             {
                 _firstMessageReceived = true;
-                this.BeginInvoke(new Action(() =>
-                {
-                    notifyIcon1.ShowBalloonTip(2000, "Connected", "vLLMからの応答を受信しました。", ToolTipIcon.Info);
-                }));
+                // Popup is no longer needed as per user request
             }
         }
 
@@ -129,8 +128,7 @@ namespace speech_input
             録音開始ToolStripMenuItem.Enabled = false;
             録音停止ToolStripMenuItem.Enabled = true;
 
-            // Test if typing works
-            _inputHandler.TypeText("[Speech-Input Started]");
+            _indicator.Show();
 
             await _client.StartAsync();
             _recorder.Start();
@@ -145,6 +143,8 @@ namespace speech_input
         {
             録音開始ToolStripMenuItem.Enabled = true;
             録音停止ToolStripMenuItem.Enabled = false;
+
+            _indicator.Hide();
 
             _recorder.Stop();
             await _client.StopAsync();
@@ -176,6 +176,7 @@ namespace speech_input
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             UnregisterHotKey(this.Handle, HOTKEY_ID);
+            _indicator?.Dispose();
             base.OnFormClosing(e);
         }
 
