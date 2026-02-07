@@ -97,6 +97,7 @@
     </Compile>
     <Compile Include="InputHandler.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="RecordingIndicator.cs" />
     <Compile Include="VllmClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
