@@ -47,9 +47,9 @@ namespace speech_input
                 var updateMsg = JsonConvert.SerializeObject(new
                 {
                     type = "session.update",
+                    model = _model,
                     session = new
                     {
-                        model = _model,
                         modalities = new[] { "text" },
                         input_audio_transcription = new { model = "whisper-1" },
                         turn_detection = new { type = "server_vad" }
