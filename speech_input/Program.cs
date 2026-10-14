@@ -10,7 +10,7 @@ namespace speech_input
     internal static class Program
     {
         private static Mutex mutex = null;
-        private const string MutexName = "background_app_singleton_mutex";
+        private const string MutexName = "speech_input_singleton_mutex";
         /// <summary>
         /// アプリケーションのメイン エントリ ポイントです。
         /// </summary>
